@@ -19,11 +19,14 @@ from random import sample
 def removeAccents(file):
     with open(file, 'r',encoding='utf-8') as accents, open (file + ".noaccent", 'w', encoding='utf-8') as noaccents:
         count = 0  
-        accentsArr = []
-        noAccentsArr = []
+        trainAccents = []
+        trainNoAccents = []
+        testAccents  = []
+        testNoAccents = []
+
         for line in accents:
             print(count)
-            count +=1
+            
             
             # Remove accents
             
@@ -44,16 +47,28 @@ def removeAccents(file):
              below contains the accents removed
            print(u"".join([c for c in nfkd_form if unicodedata.combining(c)]))
            '''
-            accentsArr.append(line.strip('\n'))
+            #accentsArr.append(line.strip('\n'))
             noAccentsArr.append(u"".join([char for char in nfkdTransform if not unicodedata.combining(char)]).strip('\n'))
-           
-    return [accentsArr, noAccentsArr]
+            if count % 10 == 0:
+                testAccents.append(line.strip('\n'))
+                testNoAccents.append(u"".join([char for char in nfkdTransform if not unicodedata.combining(char)]).strip('\n'))
+            else:
+                trainAccents.append(line.strip('\n'))
+                trainNoAccents.append(u"".join([char for char in nfkdTransform if not unicodedata.combining(char)]).strip('\n'))
+            
+            count +=1
+    return [trainAccents,trainNoAccents, testAccents, testNoAccents]
     
+[trainAccents,trainNoAccents, testAccents, testNoAccents] =     removeAccents('europarl-v7.fr-en.fr')
+'''    
 [accentsArr, noAccentsArr] = removeAccents('europarl-v7.fr-en.fr')
 pickle.dump(accentsArr, open("accentsFR.p", 'wb'))
 pickle.dump(noAccentsArr,open("noAccentsFR.p", 'wb'))
+accentsArr = pickle.load( open( "accentsFR.p", "rb" ) )
+noAccentsArr = pickle.load( open( "noAccentsFR.p", "rb" ) )
 
-
+test = np.array(accentsArr)
+'''
 #X_train, X_test, y_train, y_test = train_test_split( noAccentsArr, accentsArr, test_size=0.10, random_state=42)
 # above was given some weird results with apostrophes in the splits
 
@@ -80,7 +95,7 @@ for num in range(size):
         testAccents.append(accentsArr[num])
         testNoAccents.append(noAccentsArr[num])
 '''
-
+'''
 size = len(accentsArr)
 indices = sample(range(size),math.ceil(size*.9))
 noAccentsArr = np.array(noAccentsArr )
@@ -90,7 +105,7 @@ trainAccents = accentsArr[indices]
 
 testNoAccents = np.delete(noAccentsArr,indices)
 testAccents = np.delete(accentsArr,indices)
-
+'''
 
 
 dictTrain = {}
