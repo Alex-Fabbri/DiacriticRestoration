@@ -9,14 +9,10 @@ Created on Sun Jun 26 13:44:49 2016
 
 import unicodedata
 import pickle
-import random
-import math
 from nltk.tokenize import word_tokenize
-from sklearn.cross_validation import train_test_split
-import numpy as np
-from random import sample
 
 def removeAccents(file):
+    
     with open(file, 'r',encoding='utf-8') as accents, open (file + ".noaccent", 'w', encoding='utf-8') as noaccents:
         count = 0  
         trainAccents = []
@@ -48,7 +44,7 @@ def removeAccents(file):
            print(u"".join([c for c in nfkd_form if unicodedata.combining(c)]))
            '''
             #accentsArr.append(line.strip('\n'))
-            noAccentsArr.append(u"".join([char for char in nfkdTransform if not unicodedata.combining(char)]).strip('\n'))
+          #  noAccentsArr.append(u"".join([char for char in nfkdTransform if not unicodedata.combining(char)]).strip('\n'))
             if count % 10 == 0:
                 testAccents.append(line.strip('\n'))
                 testNoAccents.append(u"".join([char for char in nfkdTransform if not unicodedata.combining(char)]).strip('\n'))
@@ -57,9 +53,81 @@ def removeAccents(file):
                 trainNoAccents.append(u"".join([char for char in nfkdTransform if not unicodedata.combining(char)]).strip('\n'))
             
             count +=1
+    
+    pickle.dump(trainAccents, open("trainAccentsFR.p", 'wb'))
+    pickle.dump(trainNoAccents, open("trainNoAccentsFR.p", 'wb'))
+    pickle.dump(testAccents, open("testAccentsFR.p", 'wb'))
+    pickle.dump(testNoAccents, open("testNoAccentsFR.p", 'wb'))
     return [trainAccents,trainNoAccents, testAccents, testNoAccents]
     
+
+
+def getFrequencyDict(trainAccents, trainNoAccents):
+
+    dictnoAccents = {}
+    err = 0
+    errList = []
+    for i in range(len(trainAccents)):
+        
+        sentenceAccents = trainAccents[i]
+        sentenceNoAccents = trainNoAccents[i]
+        
+        tokensAccents = word_tokenize(sentenceAccents)
+        #print(tokensAccents)
+        tokensNoAccents = word_tokenize(sentenceNoAccents)
+        #print(tokensNoAccents)
+        if len(tokensAccents) == len(tokensNoAccents):
+            
+            for j in range(len(tokensAccents)):
+                tA = tokensAccents[j]
+                tNA = tokensNoAccents[j]
+                #print(tokensAccents[j])
+                #print(tokensNoAccents[j])
+                if tNA not in dictnoAccents.keys():
+                    dictnoAccents[tNA] = {tA:1}
+                    #print("HI")
+                else:
+                    if tA not in dictnoAccents[tNA].keys():
+                        dictnoAccents[tNA][tA] =1
+                    else:
+                        dictnoAccents[tNA][tA] +=1               
+        else:
+            err +=1
+            errList.append(trainAccents[i])
+    pickle.dump(dictnoAccents, open("frequenciesFR.p", 'wb'))   
+    pickle.dump(errList,open("oddSetences.p", 'wb'))    
+    print("DONE")
+    return dictnoAccents    
+    
 [trainAccents,trainNoAccents, testAccents, testNoAccents] =     removeAccents('europarl-v7.fr-en.fr')
+dictnoAccents = getFrequencyDict(trainAccents, trainNoAccents)  
+
+punctuation = "!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
+count = 0
+correct = 0
+for i in range(len(testNoAccents)):
+    sentenceAccents = trainAccents[i]
+    sentenceNoAccents = trainNoAccents[i]
+        
+    tokensAccents = word_tokenize(sentenceAccents)
+    tokensNoAccents = word_tokenize(sentenceNoAccents)
+    
+    if len(tokensAccents) == len(tokensNoAccents):
+        for j in range(len(tokensAccents)):
+            tA = tokensAccents[j]
+            tNA = tokensNoAccents[j]
+            if tokensNoAccents not in punctuation and not tokensNoAccents.isdigit():
+                
+                count +=1
+                print("HI")
+            
+
+'''for token in tokens:
+        print(token)'''
+'''if token in dictTrain.keys:
+            tokens[token] +=1
+        else:
+            tokens[token] = 1'''
 '''    
 [accentsArr, noAccentsArr] = removeAccents('europarl-v7.fr-en.fr')
 pickle.dump(accentsArr, open("accentsFR.p", 'wb'))
@@ -107,18 +175,6 @@ testNoAccents = np.delete(noAccentsArr,indices)
 testAccents = np.delete(accentsArr,indices)
 '''
 
-
-dictTrain = {}
-for sentence in train:
-    print(sentence)
-    '''tokens = word_tokenize(sentence)
-    print(tokens)'''
-    '''for token in tokens:
-        print(token)'''
-        '''if token in dictTrain.keys:
-            tokens[token] +=1
-        else:
-            tokens[token] = 1'''
             
 '''  
 from nltk.tokenize import wordpunct_tokenize
